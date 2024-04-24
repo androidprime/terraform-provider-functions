@@ -1,14 +1,5 @@
-terraform {
-  required_providers {
-    functions = {
-      source = "registry.terraform.io/hashicorp/functions"
-    }
-  }
-  required_version = ">= 1.8.0"
-}
-
-output "output" {
-  value = (
+locals {
+  base64targz = (
     provider::functions::base64targz([
       {
         filename = "test/foo.txt"
@@ -21,10 +12,3 @@ output "output" {
     ])
   )
 }
-
-/*
-terraform output -json \
-| jq .output.value -r \
-| base64 -d > output.tar.gz \
-| tar xvzf -
-*/
