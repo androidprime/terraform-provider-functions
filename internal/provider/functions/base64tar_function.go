@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"path/filepath"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -61,19 +62,38 @@ func (f *Base64TarGzFunction) Run(ctx context.Context, req function.RunRequest, 
 		return
 	}
 
+	directories := make(map[string]bool)
+
 	for _, source := range sources {
 		filename := source.Filename.ValueString()
 		contents := source.Contents.ValueString()
+		directory := filepath.Dir(filename)
+
+		if _, exists := directories[directory]; !exists {
+			header := &tar.Header{
+				Name:     directory,
+				Mode:     0755,
+				Typeflag: tar.TypeDir,
+			}
+
+			if err := tarWriter.WriteHeader(header); err != nil {
+				resp.Error = function.NewFuncError(err.Error())
+				return
+			}
+		}
+
 		header := &tar.Header{
 			Name:     filename,
 			Mode:     0600,
 			Size:     int64(len(contents)),
 			Typeflag: tar.TypeReg,
 		}
+
 		if err := tarWriter.WriteHeader(header); err != nil {
 			resp.Error = function.NewFuncError(err.Error())
 			return
 		}
+
 		if _, err := tarWriter.Write([]byte(contents)); err != nil {
 			resp.Error = function.NewFuncError(err.Error())
 			return
