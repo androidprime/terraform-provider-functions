@@ -1,5 +1,5 @@
 /bin
 /dist
-/examples/.terraform-version
-/examples/terraform.*
+/examples/functions/.terraform-version
+/examples/functions/terraform.*
 /tools
