@@ -1,10 +1,9 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
-package functions
+package provider
 
 import (
 	"context"
+
+	"terraform-provider-functions/internal/provider/functions"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -13,15 +12,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 
-// Ensure FunctionsProvider satisfies various provider interfaces.
 var _ provider.ProviderWithFunctions = &FunctionsProvider{}
 
-// FunctionsProvider defines the provider implementation.
 type FunctionsProvider struct {
 	version string
 }
 
-// FunctionsProviderModel describes the provider data model.
 type FunctionsProviderModel struct{}
 
 func (p *FunctionsProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -46,7 +42,7 @@ func (p *FunctionsProvider) DataSources(ctx context.Context) []func() datasource
 
 func (p *FunctionsProvider) Functions(ctx context.Context) []func() function.Function {
 	return []func() function.Function{
-		NewBase64TarGzFunction,
+		functions.NewBase64TarGzFunction,
 	}
 }
 
