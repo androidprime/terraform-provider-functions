@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 
-	functions "terraform-provider-functions/internal/provider/functions"
+	"terraform-provider-functions/internal/provider/functions"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/function"

@@ -6,7 +6,6 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -69,7 +68,6 @@ func (f *Base64TarGzFunction) Run(ctx context.Context, req function.RunRequest, 
 			Name:     filename,
 			Mode:     0600,
 			Size:     int64(len(contents)),
-			ModTime:  time.Now(),
 			Typeflag: tar.TypeReg,
 		}
 		if err := tarWriter.WriteHeader(header); err != nil {
