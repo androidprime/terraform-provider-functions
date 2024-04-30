@@ -13,18 +13,16 @@ The functions provider extends the available functions for a Terraform project.
 **versions.tf**
 ```terraform
 terraform {
-  required_version = "~> 1.8"
-
   required_providers {
-    utilities = {
-      source  = "craigsloggett/utility-functions"
-      version = "0.1.0"
+    functions = {
+      source = "registry.terraform.io/hashicorp/functions"
     }
   }
+  required_version = ">= 1.8.0"
 }
 ```
 
 **providers.tf**
 ```terraform
-provider "utilities" {}
+provider "functions" {}
 ```
