@@ -5,29 +5,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"path/filepath"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
-
-func (s Source) directory() string {
-	return filepath.Dir(s.filename())
-}
-
-func (s Source) filename() string {
-	return s.Filename.ValueString()
-}
-
-func (s Source) content() string {
-	return s.Content.ValueString()
-}
-
-type Source struct {
-	Filename types.String `tfsdk:"filename"`
-	Content  types.String `tfsdk:"content"`
-}
 
 var _ function.Function = &Base64TarFunction{}
 
@@ -41,6 +23,7 @@ func (f *Base64TarFunction) Metadata(ctx context.Context, req function.MetadataR
 	resp.Name = "base64tar"
 }
 
+// https://developer.hashicorp.com/terraform/plugin/framework/handling-data/attributes/list-nested
 func (f *Base64TarFunction) Definition(ctx context.Context, req function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Creates a tar.gz file.",
@@ -102,7 +85,7 @@ func (f *Base64TarFunction) Run(ctx context.Context, req function.RunRequest, re
 			resp.Error = function.NewFuncError(err.Error())
 		}
 
-		if _, err := tarWriter.Write([]byte(content)); err != nil {
+		if _, err := tarWriter.Write(content); err != nil {
 			resp.Error = function.NewFuncError(err.Error())
 		}
 	}
