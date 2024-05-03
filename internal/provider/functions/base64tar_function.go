@@ -4,9 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"fmt"
-	"io"
-	"log"
+	"encoding/base64"
 	"path/filepath"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -14,30 +12,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type Base64TarFunction struct{}
+func (s Source) directory() string {
+	return filepath.Dir(s.filename())
+}
+
+func (s Source) filename() string {
+	return s.Filename.ValueString()
+}
+
+func (s Source) content() string {
+	return s.Content.ValueString()
+}
+
+type Source struct {
+	Filename types.String `tfsdk:"filename"`
+	Content  types.String `tfsdk:"content"`
+}
 
 var _ function.Function = &Base64TarFunction{}
 
+type Base64TarFunction struct{}
+
 func NewBase64TarFunction() function.Function {
 	return &Base64TarFunction{}
-}
-
-func (f *Base64TarFunction) MakeTarHeader(name string, typeFlag byte) *tar.Header {
-	var mode int64
-
-	if typeFlag == tar.TypeDir {
-		mode = 0755
-	} else {
-		mode = 0600
-	}
-
-	header := &tar.Header{
-		Name:     name,
-		Mode:     mode,
-		Typeflag: typeFlag,
-	}
-
-	return header
 }
 
 func (f *Base64TarFunction) Metadata(ctx context.Context, req function.MetadataRequest, resp *function.MetadataResponse) {
@@ -53,7 +50,7 @@ func (f *Base64TarFunction) Definition(ctx context.Context, req function.Definit
 				ElementType: types.ObjectType{
 					AttrTypes: map[string]attr.Type{
 						"filename": types.StringType,
-						"contents": types.StringType,
+						"content":  types.StringType,
 					},
 				},
 				Name:        "sources",
@@ -67,100 +64,50 @@ func (f *Base64TarFunction) Definition(ctx context.Context, req function.Definit
 func (f *Base64TarFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
 	var sources []Source
 
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &sources))
+
 	var buffer bytes.Buffer
 
 	tarWriter := tar.NewWriter(&buffer)
 
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &sources))
-	if resp.Error != nil {
-		return
-	}
-
 	directories := make(map[string]bool)
 
 	for _, source := range sources {
-		filename := source.Filename.ValueString()
-		contents := source.Contents.ValueString()
-		directory := filepath.Dir(filename)
+		directory := source.directory()
+		filename := source.filename()
+		content := source.content()
 
-		if _, exists := directories[directory]; !exists {
+		if !directories[directory] {
 			header := &tar.Header{
 				Name:     directory,
 				Mode:     0755,
 				Typeflag: tar.TypeDir,
+				Size:     int64(0),
 			}
 
 			if err := tarWriter.WriteHeader(header); err != nil {
 				resp.Error = function.NewFuncError(err.Error())
-				return
 			}
+
+			directories[directory] = true
 		}
 
 		header := &tar.Header{
-			Name:     filename,
-			Mode:     0600,
-			Size:     int64(len(contents)),
-			Typeflag: tar.TypeReg,
+			Name: filename,
+			Mode: 0644,
+			Size: int64(len(content)),
 		}
 
 		if err := tarWriter.WriteHeader(header); err != nil {
 			resp.Error = function.NewFuncError(err.Error())
-			return
 		}
 
-		if _, err := tarWriter.Write([]byte(contents)); err != nil {
+		if _, err := tarWriter.Write([]byte(content)); err != nil {
 			resp.Error = function.NewFuncError(err.Error())
-			return
 		}
 	}
 
-	if err := tarWriter.Close(); err != nil {
-		resp.Error = function.NewFuncError(err.Error())
-		return
-	}
+	result := base64.StdEncoding.EncodeToString(buffer.Bytes())
 
-	bytesReader := bytes.NewReader(buffer.Bytes())
-	tarReader := tar.NewReader(bytesReader)
-
-	var fluffer bytes.Buffer
-
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			log.Fatal(err)
-		}
-
-		content, _ := io.ReadAll(tarReader)
-
-		fluffer.WriteString(fmt.Sprintf(
-			"%s%06o %06o %06o %011o %d %s %s%s%s%s%s%s %s %s",
-			header.Name,
-			header.Mode,
-			header.Uid,
-			header.Gid,
-			header.Size,
-			header.ModTime.Unix(),
-			"015015",
-			string(header.Typeflag),
-			"ustar",
-			"00",
-			header.Uname,
-			header.Gname,
-			"000000",
-			"000000",
-			string(content),
-		))
-	}
-	fmt.Println(fluffer.String())
-
-	//contents, _ := io.ReadAll(bytes.NewReader(buffer.Bytes()))
-
-	//base64EncodedBuffer := base64.StdEncoding.EncodeToString(contents)
-
-	//resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, base64EncodedBuffer))
-
-	//resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, hex.EncodeToString(contents)))
-	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, fluffer.String()))
+	function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, result))
 }
