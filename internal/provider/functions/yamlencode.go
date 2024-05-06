@@ -2,8 +2,11 @@ package functions
 
 import (
 	"context"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"gopkg.in/yaml.v2"
 )
 
 type Data struct{}
@@ -27,8 +30,8 @@ func (f *YamlEncodeFunction) Definition(ctx context.Context, req function.Defini
 		Description: "",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
-				Name:        "data",
-				Description: "",
+				Name:               "data",
+				AllowUnknownValues: true,
 			},
 		},
 		Return: function.StringReturn{},
@@ -36,9 +39,29 @@ func (f *YamlEncodeFunction) Definition(ctx context.Context, req function.Defini
 }
 
 func (f *YamlEncodeFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
-	var data Data
+	var data types.Dynamic
 
 	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &data))
 
-	function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, ""))
+	var data_2 map[string]interface{}
+	if err := yaml.Unmarshal([]byte(data.String()), &data_2); err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
+	// Marshal the map into YAML format
+	yamlBytes, err := yaml.Marshal(&data_2)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
+	// Convert the YAML byte slice to a string for printing
+	yamlString := string(yamlBytes)
+
+	result := yamlString
+	//result, err := yaml.Marshal(data)
+	//if err != nil {
+	//	resp.Error = function.NewFuncError(err.Error())
+	//}
+
+	function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, result))
 }
