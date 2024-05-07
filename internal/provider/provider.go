@@ -42,8 +42,9 @@ func (p *FunctionsProvider) DataSources(ctx context.Context) []func() datasource
 
 func (p *FunctionsProvider) Functions(ctx context.Context) []func() function.Function {
 	return []func() function.Function{
-		functions.NewBase64TarGzFunction,
 		functions.NewBase64TarFunction,
+		functions.NewBase64ZipFunction,
+		functions.NewYamlEncodeFunction,
 	}
 }
 

@@ -69,9 +69,7 @@ locals {
       }), "\"", "")
     }
   ]
-  base64tar = (
-    provider::functions::base64tar(local.sources)
+  base64zip = (
+    provider::functions::base64zip(local.sources)
   )
-  base64tar_decoded = base64decode(local.base64tar)
-  base64tar_gzip    = base64gzip(local.base64tar_decoded)
 }

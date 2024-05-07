@@ -69,9 +69,13 @@ locals {
       }), "\"", "")
     }
   ]
-  base64tar = (
-    provider::functions::base64tar(local.sources)
-  )
-  base64tar_decoded = base64decode(local.base64tar)
-  base64tar_gzip    = base64gzip(local.base64tar_decoded)
+  base64zip = provider::functions::yamlencode("asdf")
+  //base64zip = (
+  //  provider::functions::yamlencode({
+  //    apiVersion = "v2"
+  //    name       = "example"
+  //    type       = "application"
+  //    version    = "0.0.2"
+  //  })
+  //)
 }
