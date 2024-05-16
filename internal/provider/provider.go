@@ -45,6 +45,7 @@ func (p *FunctionsProvider) Functions(ctx context.Context) []func() function.Fun
 		functions.NewBase64TarFunction,
 		functions.NewBase64ZipFunction,
 		functions.NewYamlEncodeFunction,
+		functions.NewGetEnvironmentVariableFunction,
 	}
 }
 
