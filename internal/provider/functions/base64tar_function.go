@@ -90,6 +90,10 @@ func (f *Base64TarFunction) Run(ctx context.Context, req function.RunRequest, re
 		}
 	}
 
+    if err := tarWriter.Close(); err != nil {
+        resp.Error = function.NewFuncError(err.Error())
+    }
+
 	result := base64.StdEncoding.EncodeToString(buffer.Bytes())
 
 	function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, result))

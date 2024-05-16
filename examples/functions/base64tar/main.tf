@@ -6,7 +6,7 @@ locals {
         apiVersion = "v2"
         name       = "example"
         type       = "application"
-        version    = "0.0.2"
+        version    = "0.0.1"
       }), "\"", "")
     },
     {
