@@ -1,4 +1,4 @@
 locals {
-  key = "FOO"
+  key = "PING"
   value = provider::functions::getenvironmentvariable(local.key)
 }

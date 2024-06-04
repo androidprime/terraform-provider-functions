@@ -42,7 +42,7 @@ func (f *GetEnvironmentVariableFunction) Run(ctx context.Context, req function.R
 	value, exists := os.LookupEnv(key)
 
 	if !exists {
-		resp.Error = function.NewFuncError(fmt.Sprintf("%s does not exist", key))
+		resp.Error = function.NewFuncError(fmt.Sprintf("Environment variable %s is unset", key))
 	}
 
 	function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, value))
